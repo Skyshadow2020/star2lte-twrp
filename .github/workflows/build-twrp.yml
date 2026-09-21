@@ -43,6 +43,15 @@ jobs:
           git config --global user.name "CI"
           git config --global color.ui false
 
+      - name: Add swap (private runner has 7GB RAM — soong tests OOM otherwise)
+        run: |
+          sudo swapoff -a || true
+          sudo fallocate -l 10G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
       - name: Sync twrp-12.1 (minimal aosp manifest, depth 1)
         run: |
           mkdir -p twrp && cd twrp
@@ -69,7 +78,7 @@ jobs:
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
           lunch ${{ inputs.lunch_target }}
-          mka recoveryimage -j4
+          mka recoveryimage -j2
 
       - name: Repack into Samsung boot format
         run: |
