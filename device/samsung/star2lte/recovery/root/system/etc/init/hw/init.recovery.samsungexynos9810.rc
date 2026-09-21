@@ -1,0 +1,40 @@
+# init.recovery.samsungexynos9810.rc
+# star2lte FBE-decrypt HAL stack for TWRP: Samsung keymaster3 on the
+# Trustonic TEE. Mirrors /vendor/etc/init/{mobicore,keymaster,gatekeeper}.rc
+# from the PE13 ROM, adjusted for the recovery ramdisk layout (blobs live
+# under /system/vendor) and for TWRP's init phases.
+#
+# ro.hardware here is "samsungexynos9810" — init imports
+# /system/etc/init/hw/init.recovery.${ro.hardware}.rc, which is this file.
+
+on early-fs
+    export MC_AUTH_TOKEN_PATH /efs
+
+on fs
+    mkdir /efs/TEE 0770 radio system
+    chmod 0660 /dev/t-base-tui
+    chown system system /dev/t-base-tui
+    start mobicore
+
+service mobicore /system/vendor/bin/mcDriverDaemon -r /system/vendor/app/mcRegistry/FFFFFFFF000000000000000000000001.drbin -r /system/vendor/app/mcRegistry/ffffffffd0000000000000000000000a.tlbin -r /system/vendor/app/mcRegistry/ffffffffd00000000000000000000016.tlbin -r /system/vendor/app/mcRegistry/ffffffffd00000000000000000000045.drbin
+    class core
+    user root
+    group root
+    seclabel u:r:recovery:s0
+    disabled
+
+service vendor.keymaster-3-0 /system/vendor/bin/hw/android.hardware.keymaster@3.0-service
+    class hal
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+service vendor.gatekeeper-1-0 /system/vendor/bin/hw/android.hardware.gatekeeper@1.0-service
+    class hal
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+on late-fs
+    start vendor.keymaster-3-0
+    start vendor.gatekeeper-1-0
