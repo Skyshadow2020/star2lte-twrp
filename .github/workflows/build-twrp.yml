@@ -65,6 +65,8 @@ jobs:
 
       - name: Add swap before build (7GB RAM runner — soong OOM otherwise)
         run: |
+          sudo swapoff -a || true
+          sudo rm -f /swapfile
           sudo fallocate -l 6G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
