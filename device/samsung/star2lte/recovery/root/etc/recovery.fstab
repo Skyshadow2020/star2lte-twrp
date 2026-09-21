@@ -1,0 +1,18 @@
+# star2lte recovery fstab — mirrors the PE13 ROM vendor fstab
+# (data line keeps fileencryption=aes-256-xts so TWRP attaches the same policy)
+
+/dev/block/platform/11120000.ufs/by-name/SYSTEM         /system          ext4    ro,barrier=1                                                                  wait
+/dev/block/platform/11120000.ufs/by-name/SYSTEM         /system          erofs   ro                                                                            wait
+/dev/block/platform/11120000.ufs/by-name/VENDOR         /vendor          erofs   ro                                                                            wait
+/dev/block/platform/11120000.ufs/by-name/VENDOR         /vendor          ext4    ro,barrier=1                                                                  wait
+/dev/block/platform/11120000.ufs/by-name/CACHE          /cache           ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered    wait,check
+/dev/block/platform/11120000.ufs/by-name/CACHE          /cache           f2fs    noatime,nosuid,nodev,discard                                                  wait,check
+/dev/block/platform/11120000.ufs/by-name/USERDATA       /data            ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered,errors=panic latemount,wait,check,quota,fileencryption=aes-256-xts,reservedsize=128M
+/dev/block/platform/11120000.ufs/by-name/USERDATA       /data            f2fs    noatime,nosuid,nodev,discard                                                  latemount,wait,check,quota,fileencryption=aes-256-xts,reservedsize=128M
+/dev/block/platform/11120000.ufs/by-name/EFS            /efs             ext4    noatime,nosuid,nodev,noauto_da_alloc                                          wait,check
+/dev/block/platform/11120000.ufs/by-name/CPEFS          /cpefs           ext4    noatime,nosuid,nodev                                                          wait,check,nofail
+/dev/block/platform/11120000.ufs/by-name/BOOT           /boot            emmc    defaults                                                                      recoveryonly
+/dev/block/platform/11120000.ufs/by-name/RECOVERY       /recovery        emmc    defaults                                                                      recoveryonly
+/dev/block/platform/11120000.ufs/by-name/MISC           /misc            emmc    defaults                                                                      defaults
+/devices/platform/11500000.dwmmc2/mmc_host*             auto             auto    defaults                                                                      voldmanaged=sdcard:auto
+/devices/platform/10c00000.usb/10c00000.dwc3*           auto             auto    defaults                                                                      voldmanaged=usb:auto

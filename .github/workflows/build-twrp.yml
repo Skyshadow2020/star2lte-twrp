@@ -2,17 +2,14 @@ name: TWRP star2lte build
 
 # Builds TWRP 12.1 (omni) recovery for star2lte (Galaxy S9+ Exynos) with the
 # FBE-decrypt stack, entirely on GitHub Actions — no local Linux needed.
-# Device tree is generated on the runner by twrpdtgen from the bundled
-# star2lte TWRP image; Samsung keymaster3/Trustonic/gatekeeper vendor blobs
-# (pulled from the PE13 ROM) are packed into the recovery ramdisk.
+# The committed device tree carries our own kernel as prebuilt (ROM-era
+# fscrypt + Trustonic drivers) and the Samsung keymaster3/phh/Trustonic
+# vendor blobs from the PE13 ROM. Final images are re-packed into the
+# Samsung v0+DTBH format by tools/samsung_pack.py.
 
 on:
   workflow_dispatch:
     inputs:
-      fscrypt_policy:
-        description: "TW_USE_FSCRYPT_POLICY (1 = v1 policies, 2 = v2)"
-        required: false
-        default: "2"
       lunch_target:
         description: "lunch target"
         required: false
@@ -32,21 +29,10 @@ jobs:
             zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
             lib32ncurses-dev x11proto-core-dev libx11-dev lib32z-dev \
             libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig \
-            python3-pip device-tree-compiler repo
-          pip3 install twrpdtgen
+            python3 device-tree-compiler repo
           git config --global user.email "ci@localhost"
           git config --global user.name "CI"
           git config --global color.ui false
-
-      - name: Generate device tree (twrpdtgen)
-        run: |
-          python3 -m twrpdtgen star2lte-twrp-base.img
-          TREE=$(find working -maxdepth 6 -type d -name "star2lte" | head -1)
-          if [ -z "$TREE" ]; then
-            echo "device tree generation failed"; find working -maxdepth 5 -type d | head -30; exit 1
-          fi
-          echo "TREE=$TREE" >> "$GITHUB_ENV"
-          echo "generated tree: $TREE"
 
       - name: Sync omni twrp-12.1 (depth 1)
         run: |
@@ -56,8 +42,8 @@ jobs:
           repo sync -c -j4 --no-clone-bundle --no-tags
           df -h .
 
-      - name: Place tree, blobs and decrypt flags
-        run: ./setup-tree.sh "$TREE" "${{ inputs.fscrypt_policy }}"
+      - name: Place tree and blobs
+        run: ./setup-tree.sh
 
       - name: Build recovery
         run: |
@@ -66,14 +52,29 @@ jobs:
           lunch ${{ inputs.lunch_target }}
           mka recoveryimage -j4
 
-      - name: Upload recovery image
+      - name: Repack into Samsung boot format
+        run: |
+          python3 tools/samsung_pack.py \
+            star2lte-twrp-base.img \
+            twrp/out/target/product/star2lte/kernel \
+            twrp/out/target/product/star2lte/ramdisk-recovery.img \
+            device/samsung/star2lte/prebuilt/dt \
+            twrp/out/target/product/star2lte/recovery-samsung.img || \
+          python3 tools/samsung_pack.py \
+            star2lte-twrp-base.img \
+            twrp/out/target/product/star2lte/recovery.img.tmp.kernel \
+            twrp/out/target/product/star2lte/ramdisk-recovery.img \
+            device/samsung/star2lte/prebuilt/dt \
+            twrp/out/target/product/star2lte/recovery-samsung.img
+
+      - name: Upload recovery images
         uses: actions/upload-artifact@v4
         with:
           name: twrp-star2lte-decrypt
           path: |
+            twrp/out/target/product/star2lte/recovery-samsung.img
             twrp/out/target/product/star2lte/recovery.img
-            twrp/out/target/product/star2lte/*.zip
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - name: Upload build log on failure
         if: failure()
