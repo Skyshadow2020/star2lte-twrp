@@ -24,7 +24,7 @@ free -h
 mkdir -p ~/twrp && cd ~/twrp
 [ -d .repo ] || ~/bin/repo init -q -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1 --depth=1
 mkdir -p .repo/local_manifests
-cp ~/work/star2lte-twrp/local_manifests/*.xml .repo/local_manifests/
+cp /workspaces/star2lte-twrp/local_manifests/*.xml .repo/local_manifests/
 ~/bin/repo sync -c -j4 --no-clone-bundle --no-tags
 echo "sync done $(date)"
 df -h /
@@ -34,7 +34,7 @@ rm -rf .repo/projects .repo/project-objects
 df -h /
 
 # tree + blobs + flags
-cd ~/work/star2lte-twrp
+cd /workspaces/star2lte-twrp
 bash setup-tree.sh
 cd ~/twrp
 
@@ -46,15 +46,15 @@ mka recoveryimage -j4
 echo "mka done $(date)"
 
 # samsung repack
-python3 ~/work/star2lte-twrp/tools/samsung_pack.py \
-  ~/work/star2lte-twrp/star2lte-twrp-base.img \
+python3 /workspaces/star2lte-twrp/tools/samsung_pack.py \
+  /workspaces/star2lte-twrp/star2lte-twrp-base.img \
   out/target/product/star2lte/kernel \
   out/target/product/star2lte/ramdisk-recovery.img \
-  ~/work/star2lte-twrp/device/samsung/star2lte/prebuilt/dt \
+  /workspaces/star2lte-twrp/device/samsung/star2lte/prebuilt/dt \
   out/target/product/star2lte/recovery-samsung.img
 
 # park artifacts on a branch so nothing is lost
-cd ~/work/star2lte-twrp
+cd /workspaces/star2lte-twrp
 git config user.email ci@localhost; git config user.name CI
 git checkout -q -B artifacts
 cp /tmp/codespace-build.log build.log 2>/dev/null || true
