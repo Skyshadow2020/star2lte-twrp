@@ -1,0 +1,86 @@
+name: TWRP star2lte build
+
+# Builds TWRP 12.1 (omni) recovery for star2lte (Galaxy S9+ Exynos) with the
+# FBE-decrypt stack, entirely on GitHub Actions — no local Linux needed.
+# Device tree is generated on the runner by twrpdtgen from the bundled
+# star2lte TWRP image; Samsung keymaster3/Trustonic/gatekeeper vendor blobs
+# (pulled from the PE13 ROM) are packed into the recovery ramdisk.
+
+on:
+  workflow_dispatch:
+    inputs:
+      fscrypt_policy:
+        description: "TW_USE_FSCRYPT_POLICY (1 = v1 policies, 2 = v2)"
+        required: false
+        default: "2"
+      lunch_target:
+        description: "lunch target"
+        required: false
+        default: "omni_star2lte-userdebug"
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-core gnupg flex bison gperf build-essential \
+            zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 \
+            lib32ncurses-dev x11proto-core-dev libx11-dev lib32z-dev \
+            libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig \
+            python3-pip device-tree-compiler repo
+          pip3 install twrpdtgen
+          git config --global user.email "ci@localhost"
+          git config --global user.name "CI"
+          git config --global color.ui false
+
+      - name: Generate device tree (twrpdtgen)
+        run: |
+          python3 -m twrpdtgen star2lte-twrp-base.img
+          TREE=$(find working -maxdepth 6 -type d -name "star2lte" | head -1)
+          if [ -z "$TREE" ]; then
+            echo "device tree generation failed"; find working -maxdepth 5 -type d | head -30; exit 1
+          fi
+          echo "TREE=$TREE" >> "$GITHUB_ENV"
+          echo "generated tree: $TREE"
+
+      - name: Sync omni twrp-12.1 (depth 1)
+        run: |
+          mkdir -p twrp && cd twrp
+          repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git \
+            -b twrp-12.1 --depth=1
+          repo sync -c -j4 --no-clone-bundle --no-tags
+          df -h .
+
+      - name: Place tree, blobs and decrypt flags
+        run: ./setup-tree.sh "$TREE" "${{ inputs.fscrypt_policy }}"
+
+      - name: Build recovery
+        run: |
+          cd twrp
+          source build/envsetup.sh
+          lunch ${{ inputs.lunch_target }}
+          mka recoveryimage -j4
+
+      - name: Upload recovery image
+        uses: actions/upload-artifact@v4
+        with:
+          name: twrp-star2lte-decrypt
+          path: |
+            twrp/out/target/product/star2lte/recovery.img
+            twrp/out/target/product/star2lte/*.zip
+          if-no-files-found: error
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: |
+            twrp/out/error.log
+            twrp/out/soong.log
+          if-no-files-found: ignore
