@@ -39,7 +39,15 @@ jobs:
           mkdir -p twrp && cd twrp
           repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git \
             -b twrp-12.1 --depth=1
-          repo sync -c -j4 --no-clone-bundle --no-tags
+          for attempt in 1 2 3; do
+            echo "sync attempt $attempt"
+            if repo sync -c -j2 --no-clone-bundle --no-tags; then
+              echo "sync OK"
+              break
+            fi
+            [ "$attempt" = "3" ] && exit 1
+            sleep 20
+          done
           df -h .
 
       - name: Place tree and blobs
