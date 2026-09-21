@@ -13,7 +13,7 @@ on:
       lunch_target:
         description: "lunch target"
         required: false
-        default: "omni_star2lte-userdebug"
+        default: "twrp_star2lte-userdebug"
 
 jobs:
   build:
@@ -34,10 +34,10 @@ jobs:
           git config --global user.name "CI"
           git config --global color.ui false
 
-      - name: Sync omni twrp-12.1 (depth 1)
+      - name: Sync twrp-12.1 (minimal aosp manifest, depth 1)
         run: |
           mkdir -p twrp && cd twrp
-          repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git \
+          repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git \
             -b twrp-12.1 --depth=1
           repo sync -c -j4 --no-clone-bundle --no-tags
           df -h .
