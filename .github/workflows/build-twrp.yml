@@ -26,7 +26,8 @@ jobs:
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
             /usr/local/share/boost /usr/lib/jvm /usr/local/.ghcup \
-            /opt/hostedtoolcache/CodeQL /usr/share/swift 2>/dev/null || true
+            /opt/hostedtoolcache /usr/share/swift /opt/az \
+            /usr/local/tools /opt/microsoft 2>/dev/null || true
           sudo docker image prune -af >/dev/null 2>&1 || true
           sudo apt-get clean
           df -h /
@@ -48,6 +49,8 @@ jobs:
           mkdir -p twrp && cd twrp
           repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git \
             -b twrp-12.1 --depth=1
+          mkdir -p .repo/local_manifests
+          cp ../local_manifests/*.xml .repo/local_manifests/
           for attempt in 1 2 3; do
             echo "sync attempt $attempt"
             if repo sync -c -j2 --no-clone-bundle --no-tags; then
@@ -67,7 +70,7 @@ jobs:
         run: |
           sudo swapoff -a || true
           sudo rm -f /swapfile
-          sudo fallocate -l 6G /swapfile
+          sudo fallocate -l 4G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
           sudo swapon /swapfile
