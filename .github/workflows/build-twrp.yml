@@ -13,7 +13,7 @@ on:
       lunch_target:
         description: "lunch target"
         required: false
-        default: "twrp_star2lte-userdebug"
+        default: "twrp_star2lte-eng"
 
 jobs:
   build:
@@ -67,6 +67,7 @@ jobs:
         run: |
           cd twrp
           source build/envsetup.sh
+          export ALLOW_MISSING_DEPENDENCIES=true
           lunch ${{ inputs.lunch_target }}
           mka recoveryimage -j4
 
