@@ -78,12 +78,22 @@ jobs:
           df -h /
 
       - name: Build recovery
+        continue-on-error: true
         run: |
           cd twrp
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
           lunch ${{ inputs.lunch_target }}
           mka recoveryimage -j2
+
+      - name: Diagnose vendor conflict
+        run: |
+          cd twrp/out/target/product/star2lte 2>/dev/null || { echo "no out dir"; exit 0; }
+          echo "=== root/vendor ==="; ls -la root/vendor 2>&1 | head -5; readlink root/vendor 2>/dev/null
+          echo "=== recovery/root/vendor ==="; ls -la recovery/root/vendor 2>&1 | head -5; readlink recovery/root/vendor 2>/dev/null
+          echo "=== root/system/vendor ==="; ls root/system/vendor 2>&1 | head -5
+          echo "=== recovery/root/system/vendor ==="; ls recovery/root/system/vendor 2>&1 | head -5
+          echo "=== find all vendor entries ==="; find root recovery/root -maxdepth 2 -name "*vendor*" 2>/dev/null
 
       - name: Repack into Samsung boot format
         run: |
