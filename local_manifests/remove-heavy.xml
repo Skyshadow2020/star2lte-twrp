@@ -90,4 +90,6 @@
   <remove-project optional="true" name="platform/packages/services/Telephony" />
   <remove-project optional="true" name="platform/packages/wallpapers/ImageWallpaper" />
   <remove-project optional="true" name="platform/packages/wallpapers/LivePicker" />
+  <remove-project optional="true" name="platform/prebuilts/rust" />
+  <remove-project optional="true" name="platform/prebuilts/sdk" />
 </manifest>

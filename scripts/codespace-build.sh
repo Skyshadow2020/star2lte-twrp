@@ -15,8 +15,8 @@ curl -s https://storage.googleapis.com/git-repo-downloads/repo -o ~/bin/repo
 chmod a+x ~/bin/repo
 echo "deps ok $(date)"
 
-# swap for soong memory headroom
-sudo fallocate -l 8G /swapfile-cs && sudo chmod 600 /swapfile-cs &&
+# swap AFTER sync (disk first, memory later)
+true # moved after sync && sudo chmod 600 /swapfile-cs &&
   sudo mkswap /swapfile-cs >/dev/null && sudo swapon /swapfile-cs || true
 free -h
 
@@ -27,6 +27,9 @@ mkdir -p .repo/local_manifests
 cp /workspaces/star2lte-twrp/local_manifests/*.xml .repo/local_manifests/
 ~/bin/repo sync -c -j4 --no-clone-bundle --no-tags
 echo "sync done $(date)"
+# swap after sync
+sudo fallocate -l 8G /swapfile-cs && sudo chmod 600 /swapfile-cs && sudo mkswap /swapfile-cs >/dev/null && sudo swapon /swapfile-cs || true
+free -h
 df -h /
 
 # slim the tree: git metadata not needed for the build
