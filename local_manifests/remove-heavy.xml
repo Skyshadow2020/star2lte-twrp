@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <!-- heavy projects not needed for a TWRP recovery build -->
-  <remove-project optional="true" name="platform/art" />
-  <remove-project optional="true" name="platform/compatibility/cdd" />
-  <remove-project optional="true" name="platform/cts" />
-  <remove-project optional="true" name="platform/dalvik" />
-  <remove-project optional="true" name="platform/developers/build" />
-  <remove-project optional="true" name="platform/developers/demos" />
-  <remove-project optional="true" name="platform/developers/samples/android" />
-  <remove-project optional="true" name="platform/libcore" />
+  <!-- packages/modules KEPT: frameworks/base apex modules reference its api files -->
   <remove-project optional="true" name="platform/packages/apps/BasicSmsReceiver" />
   <remove-project optional="true" name="platform/packages/apps/Bluetooth" />
   <remove-project optional="true" name="platform/packages/apps/Browser2" />
@@ -85,33 +78,6 @@
   <remove-project optional="true" name="platform/packages/apps/WallpaperPicker2" />
   <remove-project optional="true" name="platform/packages/inputmethods/LatinIME" />
   <remove-project optional="true" name="platform/packages/inputmethods/LeanbackIME" />
-  <remove-project optional="true" name="platform/packages/modules/adb" />
-  <remove-project optional="true" name="platform/packages/modules/ArtPrebuilt" />
-  <remove-project optional="true" name="platform/packages/modules/BootPrebuilt/5.4/arm64" />
-  <remove-project optional="true" name="platform/packages/modules/BootPrebuilt/5.10/arm64" />
-  <remove-project optional="true" name="platform/packages/modules/CaptivePortalLogin" />
-  <remove-project optional="true" name="platform/packages/modules/CellBroadcastService" />
-  <remove-project optional="true" name="platform/packages/modules/common" />
-  <remove-project optional="true" name="platform/packages/modules/Connectivity" />
-  <remove-project optional="true" name="platform/packages/modules/Cronet" />
-  <remove-project optional="true" name="platform/packages/modules/ExtServices" />
-  <remove-project optional="true" name="platform/packages/modules/GeoTZ" />
-  <remove-project optional="true" name="platform/packages/modules/Gki" />
-  <remove-project optional="true" name="platform/packages/modules/IPsec" />
-  <remove-project optional="true" name="platform/packages/modules/DnsResolver" />
-  <remove-project optional="true" name="platform/packages/modules/ModuleMetadata" />
-  <remove-project optional="true" name="platform/packages/modules/NetworkPermissionConfig" />
-  <remove-project optional="true" name="platform/packages/modules/NetworkStack" />
-  <remove-project optional="true" name="platform/packages/modules/NeuralNetworks" />
-  <remove-project optional="true" name="platform/packages/modules/Permission" />
-  <remove-project optional="true" name="platform/packages/modules/RuntimeI18n" />
-  <remove-project optional="true" name="platform/packages/modules/Scheduling" />
-  <remove-project optional="true" name="platform/packages/modules/SdkExtensions" />
-  <remove-project optional="true" name="platform/packages/modules/StatsD" />
-  <remove-project optional="true" name="platform/packages/modules/TestModule" />
-  <remove-project optional="true" name="platform/packages/modules/Virtualization" />
-  <remove-project optional="true" name="platform/packages/modules/vndk" />
-  <remove-project optional="true" name="platform/packages/modules/Wifi" />
   <remove-project optional="true" name="platform/packages/providers/BlockedNumberProvider" />
   <remove-project optional="true" name="platform/packages/providers/BookmarkProvider" />
   <remove-project optional="true" name="platform/packages/providers/CalendarProvider" />
@@ -135,24 +101,4 @@
   <remove-project optional="true" name="platform/packages/services/Telephony" />
   <remove-project optional="true" name="platform/packages/wallpapers/ImageWallpaper" />
   <remove-project optional="true" name="platform/packages/wallpapers/LivePicker" />
-  <remove-project optional="true" name="platform/platform_testing" />
-  <remove-project optional="true" name="platform/test/framework" />
-  <remove-project optional="true" name="platform/test/mlts/benchmark" />
-  <remove-project optional="true" name="platform/test/mlts/models" />
-  <remove-project optional="true" name="platform/test/app_compat/csuite" />
-  <remove-project optional="true" name="platform/test/cts-root" />
-  <remove-project optional="true" name="platform/test/mts" />
-  <remove-project optional="true" name="platform/test/vti/dashboard" />
-  <remove-project optional="true" name="platform/test/vti/fuzz_test_serving" />
-  <remove-project optional="true" name="platform/test/vti/test_serving" />
-  <remove-project optional="true" name="platform/test/vts" />
-  <remove-project optional="true" name="platform/test/vts-testcase/fuzz" />
-  <remove-project optional="true" name="platform/test/vts-testcase/hal" />
-  <remove-project optional="true" name="platform/test/vts-testcase/hal-trace" />
-  <remove-project optional="true" name="platform/test/vts-testcase/kernel" />
-  <remove-project optional="true" name="platform/test/vts-testcase/nbu" />
-  <remove-project optional="true" name="platform/test/vts-testcase/performance" />
-  <remove-project optional="true" name="platform/test/vts-testcase/security" />
-  <remove-project optional="true" name="platform/test/vts-testcase/vndk" />
-  <remove-project optional="true" name="platform/test/catbox" />
 </manifest>
