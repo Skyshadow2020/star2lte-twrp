@@ -1,77 +1,60 @@
-# star2lte-twrp — TWRP with FBE decrypt, built on GitHub Actions
+# star2lte-twrp — TWRP with FBE decrypt for Galaxy S9+ Exynos, built on GitHub Actions
 
-Goal: a recovery for the Galaxy S9+ Exynos (**star2lte**, SM-G965F) that
-**decrypts /data** of the PE13 (Android 13, FBE) ROM — unlike the shipped
-omni TWRP which leaves data locked (`Required key not available`).
+Target: **star2lte** (SM-G965F, Exynos 9810) running **PE13** (Android 13, FBE).
+Goal: a recovery whose **Decrypt Data actually works** — the shipped omni TWRP
+leaves /data locked (`Required key not available`) because it has no keymaster
+integration at all.
 
-## Where the project is now (2026-09-22)
+Repo is **public** since 2026-09-21 → standard runners upgraded to 4-core /
+16GB / ~84GB disk (private runners were 2-core / 7GB and died repeatedly:
+4× "lost communication" / ENOSPC deaths before going public).
 
-- Pipeline validated step-by-step; failures 17–20 were tree-diet/rust/sdk/symlink
-  issues, each fixed. Run #21 is the first full-pipeline validation build.
-- **HAL launch glue landed (d04f023 + b335a5b)** — the piece run #21 will not
-  have: the recovery ramdisk previously carried the keymaster3/gatekeeper/
-  Trustonic blobs but NOTHING started them (no .rc existed anywhere), and
-  `mcDriverDaemon` was missing its trustlets.
-  - `init.recovery.samsungexynos9810.rc` + `init.recovery.star2lte.rc` (both
-    ro.hardware names covered): mirrors the ROM's mobicore/keymaster3/
-    gatekeeper rc — mobicore starts at fs, keymaster3+gatekeeper at late-fs,
-    BEFORE TWRP's Decrypt Data flow.
-  - `vendor-blobs/app/mcRegistry/` — all 30 Trustonic trustlet binaries
-    (22 MB) pulled from the phone; `mcDriverDaemon` loads them with its `-r`
-    args (paths remapped to /system/vendor/app/mcRegistry).
-  - Services run as root with `seclabel u:r:recovery:s0` and
-    `LD_LIBRARY_PATH=/system/vendor/lib64` (recovery linker namespaces don't
-    search vendor paths; the ROM's `user nobody` would lose /dev/mobicore).
-- The prebuilt kernel is our own 4.9.337 audio-fix lineage (ROM-era fscrypt +
-  Trustonic drivers builtin) — the codec race fix landed in it on 09-21.
+## Device tree (handwritten — twrpdtgen cannot identify the old TWRP)
 
-## Run it
+- `device/samsung/star2lte/` — BoardConfig (`exynos9810`, armv8-a arch
+  variants, boot header v0), `twrp_star2lte.mk`
+  (embedded → **aosp_base** inherit, official TWRP 12.1 pattern), fstab
+  mirrored from the ROM's own `/vendor/etc/fstab`
+  (`fileencryption=aes-256-xts` → **v1 policies**, `TW_USE_FSCRYPT_POLICY := 1`).
+- `prebuilt/Image` + `prebuilt/dt` — **our own kernel** (kernel-s9plus-hdmi,
+  susfs-v2-experiment line): ROM-era fscrypt + Trustonic drivers, plus the
+  audio boot-race recovery fix.
+- `vendor-blobs/` — Samsung keymaster3 + phh skeymaster shims + Trustonic
+  (`libMcClient`, `mcDriverDaemon`) + gatekeeper, pulled from the phone's
+  `/vendor` with root. Packed into the ramdisk at `system/vendor/` (NOT
+  `vendor/` — the build creates root/vendor as a symlink and a real dir there
+  breaks the final rsync).
+- `tools/samsung_pack.py` — re-packs the built recovery into the Samsung
+  header-v0 + DTBH format (dt_size/dt_addr quirks, page 2048), using the
+  original TWRP image header as template.
 
-Actions → **TWRP star2lte build** → Run workflow (the NEXT run after #21
-carries the HAL glue). First build ≈ 1.5–2 h. Flash `recovery-samsung.img` to
-RECOVERY, boot, test Decrypt Data.
+## Build-fix chain (one error at a time, all verified)
 
-## Decrypt test matrix / iteration knobs
+| # | Failure | Fix |
+|---|---|---|
+| 1 | manifest `twrp-12.1` not in omni repo | use `platform_manifest_twrp_aosp` |
+| 2 | twrpdtgen: no `ro.product.board` in old ramdisk | handwritten tree |
+| 3 | sanity wanted HDMI files | dropped with the HDMI workstream |
+| 4 | `embedded.mk` gone in AOSP 12.1 | `aosp_base.mk` (a52q pattern) |
+| 5 | `Unknown ARM architecture version: armv8` | `armv8-a` + real CPU variants |
+| 6 | `TARGET_2ND_ARCH_VARIANT armv8-a` rejected | `armv8-2a` |
+| 7 | runner disk 73G: sync+build ENOSPC ×3 | slimhub-style cleanup + remove-heavy local manifest (154→88 projects) |
+| 8 | runner RAM 7G: soong bootstrap OOM at 99% | 6–8G swap **after** sync (before = ENOSPC again) |
+| 9 | `frameworks/base` apex api files missing | keep `packages/modules` |
+| 10 | `platform-bootclasspath` needs dex jars | restore art/libcore/packages-providers |
+| 11 | `art.module.public.api` missing tracking files | restore `prebuilts/sdk` |
+| 12 | `keystore2 missing dependencies: libstd` | restore `prebuilts/rust` |
+| 13 | rsync: `could not make way for new symlink: root/vendor` | blobs to `recovery/root/system/vendor` |
 
-1. No PIN → should decrypt automatically; with PIN → enter it.
-2. `fscrypt_policy` input: `2` (A13 default) then `1` (currently set).
-3. If keymaster service fails to start: check `dmesg | grep audio-dbg`, the
-   service stderr in the TWRP console, and missing-library names — add the
-   missing .so to vendor-blobs/lib64.
-4. If keymaster starts but key ops fail: vendor sepolicy patches for the
-   recovery domain, or `TW_CRYPTO_USE_SYSTEM_VOLD`.
+## Status
 
-## Why the shipped TWRP cannot decrypt
-
-Analyzed `twrp-3.7.0_9-0-star2qltechn.img` (the newest official TWRP, but for
-the **Snapdragon** variant): kernel `4.9.65-klabit87`, keymaster **@3.0 only**,
-zero cryptfsvold/volddecrypt/libfscrypt, `fstab.qcom` (qcom). The phone is
-Exynos with a **Trustonic** TEE. Decryption is compile-time (keymaster HAL
-version + TEE transport + fscrypt glue), not something that can be patched
-into a ramdisk afterwards.
-
-## What this repo does
-
-- `star2lte-twrp-base.img` — our current omni TWRP for star2lte (decryption
-  unsupported); used only as the **device-tree source** via twrpdtgen on the
-  Linux runner.
-- `vendor-blobs/` — Samsung keymaster3 + phh shims + Trustonic
-  (`libMcClient`, `mcDriverDaemon`) + gatekeeper HALs pulled from the phone's
-  `/vendor` with root. These get packed into the recovery ramdisk so TWRP's
-  crypto glue can talk to the same TEE the ROM uses.
-- `.github/workflows/build-twrp.yml` — full pipeline: deps → twrpdtgen →
-  sync omni twrp-12.1 (depth 1) → setup-tree.sh (blobs + `TW_INCLUDE_FBE`,
-  `TW_USE_FSCRYPT_POLICY`) → `mka recoveryimage` → artifact.
+- Builds #20–22 reached **99% / full ninja compile** (keystore2 included —
+  that IS the FBE decrypt stack).
+- Latest runs (vendor-path fix): account1 run 35660612193, account2 run
+  35660615845 (parallel builds on two accounts, both public repos).
+- Next: flash `recovery-samsung.img` to RECOVERY (backup exists:
+  `backup/recovery-twrp-3.7.0-omni.img`), boot, test Decrypt Data.
 
 ## Run it
 
-Actions → **TWRP star2lte build** → Run workflow. First build ≈ 1.5–2 h.
-Flash the artifact `recovery.img` and test Decrypt Data (no PIN set → it
-should decrypt automatically; with a PIN, enter it).
-
-## Iteration knobs
-
-- `fscrypt_policy` input: try `2` (A13 default), then `1`.
-- If decrypt still fails, next steps: vendor sepolicy patches for the
-  recovery domain, `TW_CRYPTO_USE_SYSTEM_VOLD`, or swapping the keymaster
-  service binaries into `recovery/root/vendor/bin/hw/` init flow.
+Actions → **TWRP star2lte build** → Run workflow (on either account).
