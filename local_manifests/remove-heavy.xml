@@ -78,17 +78,6 @@
   <remove-project optional="true" name="platform/packages/apps/WallpaperPicker2" />
   <remove-project optional="true" name="platform/packages/inputmethods/LatinIME" />
   <remove-project optional="true" name="platform/packages/inputmethods/LeanbackIME" />
-  <remove-project optional="true" name="platform/packages/providers/BlockedNumberProvider" />
-  <remove-project optional="true" name="platform/packages/providers/BookmarkProvider" />
-  <remove-project optional="true" name="platform/packages/providers/CalendarProvider" />
-  <remove-project optional="true" name="platform/packages/providers/CallLogProvider" />
-  <remove-project optional="true" name="platform/packages/providers/ContactsProvider" />
-  <remove-project optional="true" name="platform/packages/providers/DownloadProvider" />
-  <remove-project optional="true" name="platform/packages/providers/MediaProvider" />
-  <remove-project optional="true" name="platform/packages/providers/PartnerBookmarksProvider" />
-  <remove-project optional="true" name="platform/packages/providers/TelephonyProvider" />
-  <remove-project optional="true" name="platform/packages/providers/TvProvider" />
-  <remove-project optional="true" name="platform/packages/providers/UserDictionaryProvider" />
   <remove-project optional="true" name="platform/packages/screensavers/Basic" />
   <remove-project optional="true" name="platform/packages/screensavers/PhotoTable" />
   <remove-project optional="true" name="platform/packages/services/BuiltInPrintService" />
