@@ -16,8 +16,6 @@ chmod a+x ~/bin/repo
 echo "deps ok $(date)"
 
 # swap AFTER sync (disk first, memory later)
-true # moved after sync && sudo chmod 600 /swapfile-cs &&
-  sudo mkswap /swapfile-cs >/dev/null && sudo swapon /swapfile-cs || true
 free -h
 
 # sync
@@ -31,7 +29,6 @@ echo "sync done $(date)"
 sudo fallocate -l 8G /swapfile-cs && sudo chmod 600 /swapfile-cs && sudo mkswap /swapfile-cs >/dev/null && sudo swapon /swapfile-cs || true
 free -h
 df -h /
-
 # slim the tree: git metadata not needed for the build
 rm -rf .repo/projects .repo/project-objects
 df -h /
