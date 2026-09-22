@@ -82,3 +82,24 @@ Legend: ❌ failed · 🟢 GREEN (artifact produced)
 4. Decrypt stack compiled in: keystore2, keymaster3 HAL, Trustonic
    mcDriverDaemon + registry trustlets, gatekeeper — all present in the
    green build's ramdisk.
+
+## Phase 6 addendum — the rescue (2026-09-22)
+
+The bootloop could not be caught by adb (kernel dies before adbd), so:
+entered **Download Mode** (Vol- + Bixby + Power, cable, Vol+), flashed
+`recovery-twrp-old.tar.md5` (odin tar of the working omni 3.7.0) via **Odin AP
+slot** — phone restored, system healthy.
+
+Backups inventory:
+- `backup/recovery-twrp-3.7.0-omni.img` — the working TWRP (sha d1ede449…)
+- `backup/web-twrp-current.img` — same, pulled after rescue
+- Desktop `recovery-twrp-old.tar.md5` — Odin-flashable copy
+- `builds/twrp-35716430059/recovery-samsung.img` — the decrypt-capable build
+  that bootloops (DO NOT re-flash until phase-6 diagnosis completes)
+
+Next-session plan (2 items):
+1. pack the slim kernel's OWN `dtb` (from its CI zip, `tmp-slim/dtb` — byte-
+   identical DTBH confirmed between branches, so mismatch is less likely than
+   thought) — rebuild samsung_pack with the matching DTBH anyway, retest.
+2. test-build WITHOUT the HAL-glue rc files (seclabel u:r:recovery:s0 is the
+   second suspect) — bisect the ramdisk additions if needed.
