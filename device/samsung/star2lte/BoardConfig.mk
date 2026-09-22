@@ -69,3 +69,15 @@ TW_EXCLUDE_DEFAULT_USB_INIT := true
 TW_EXTRA_LANGUAGES := false
 TW_NO_SCREEN_TIMEOUT := true
 TW_INPUT_BLACKLIST := "hbtp_vm"
+
+# size diet — verified against TeamWin/android_bootable_recovery android-12.1:
+# the 65MB RECOVERY partition is tight — drop non-essential tools
+# (decrypt stack: keymaster3/Trustonic/mcDriverDaemon stays!)
+TW_EXCLUDE_BASH := true
+TW_EXCLUDE_NANO := true
+TW_EXCLUDE_LPTOOLS := true
+TW_EXCLUDE_MTP := true
+TW_EXCLUDE_TZDATA := true
+TW_EXCLUDE_LPDUMP := true
+TW_EXCLUDE_APEX := true
+TW_INCLUDE_NTFS_3G := false
