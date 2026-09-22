@@ -84,16 +84,18 @@ jobs:
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
           lunch ${{ inputs.lunch_target }}
-          mka recoveryimage -j2
+          mka recoveryimage -j2 || echo "BUILD_FAILED_NONFATAL (continuing to diagnostics)"
 
       - name: Diagnose vendor conflict
         run: |
           cd twrp/out/target/product/star2lte 2>/dev/null || { echo "no out dir"; exit 0; }
-          echo "=== root/vendor ==="; ls -la root/vendor 2>&1 | head -5; readlink root/vendor 2>/dev/null
-          echo "=== recovery/root/vendor ==="; ls -la recovery/root/vendor 2>&1 | head -5; readlink recovery/root/vendor 2>/dev/null
-          echo "=== root/system/vendor ==="; ls root/system/vendor 2>&1 | head -5
-          echo "=== recovery/root/system/vendor ==="; ls recovery/root/system/vendor 2>&1 | head -5
-          echo "=== find all vendor entries ==="; find root recovery/root -maxdepth 2 -name "*vendor*" 2>/dev/null
+          echo "=== root/vendor ==="; ls -la root/vendor 2>&1 | head -4; readlink root/vendor 2>/dev/null
+          echo "=== recovery/root/vendor full tree ==="; find recovery/root/vendor | head -40
+          echo "=== who writes recovery/root/vendor — ninja trace ==="
+          grep -o "recovery/root/vendor[^ :]*" ../build-twrp_star2lte.ninja 2>/dev/null | sort -u | head -20
+          grep -o "[^ :]*/recovery/root/vendor/etc[^ :]*" out/soong/build.ninja 2>/dev/null | sort -u | head -20
+          echo "=== soong module names mentioning vendor/etc ==="
+          grep -B5 "recovery/root/vendor/etc" out/soong/build.ninja 2>/dev/null | grep -oE "Android.bp:[0-9]+|[a-zA-Z0-9_.-]+ " | sort -u | head -10
 
       - name: Repack into Samsung boot format
         run: |
