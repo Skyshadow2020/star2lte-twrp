@@ -6,11 +6,8 @@ TARGET_BOOTLOADER_BOARD_NAME := universal9810
 TARGET_CPU_ABI := arm64-v8a
 TARGET_CPU_VARIANT := cortex-a73
 TARGET_CPU_VARIANT_RUNTIME := cortex-a73
-TARGET_2ND_ARCH := arm
-TARGET_2ND_ARCH_VARIANT := armv8-2a
-TARGET_2ND_CPU_ABI := armeabi-v7a
-TARGET_2ND_CPU_ABI2 := armeabi
-TARGET_2ND_CPU_VARIANT := cortex-a55
+# no TARGET_2ND_ARCH: recovery is 64-bit only — halves the ninja graph
+# (every lib would otherwise compile twice: [arm64] + [arm])
 TARGET_SUPPORTS_64_BIT_APPS := true
 
 # kernel: prebuilt from kernel-s9plus-hdmi (susfs-v2-experiment line) — carries
