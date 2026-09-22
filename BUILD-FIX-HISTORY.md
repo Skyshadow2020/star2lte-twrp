@@ -103,3 +103,21 @@ Next-session plan (2 items):
    thought) — rebuild samsung_pack with the matching DTBH anyway, retest.
 2. test-build WITHOUT the HAL-glue rc files (seclabel u:r:recovery:s0 is the
    second suspect) — bisect the ramdisk additions if needed.
+
+## Phase 6 continued — bootloop root cause FOUND (2026-09-22)
+
+`/proc/last_kmsg` after the loop: THREE distinct panics, each fixed in turn:
+1. `gpu_dvfs_get_step` NULL deref — recovery-DT strips the GPU node → dvfs
+   NULL → kernel guard added (graceful 0).
+2. `s2mpb02_led_probe` strlen(NULL) — recovery-DT strips the LED label →
+   skip-unnamed-LEDs guard added.
+3. **`VFS: Unable to mount root fs` + `junk in compressed archive`** — THE
+   final one: the SBL passes the recovery initrd with **size − 8** (it
+   reserves the last 8 bytes of the recovery ramdisk for the boot-command
+   buffer; the system boot's ATAG is exact — measured: ours 0x215AAB9 →
+   ATAG 0x215AAB1). The missing 8 bytes = the gzip CRC footer → gunzip CRC
+   fail → initramfs rejected → panic loop (23× R reboots in param logs).
+   **Fix: pad the gzipped ramdisk with 8 bytes** — the reserved 8 now eat
+   padding and the kernel receives the complete stream (verified: the
+   size−8 window decompresses fully with eof=True). Fix is permanent in
+   `tools/samsung_pack.py` (RAMDISK_PAD).
