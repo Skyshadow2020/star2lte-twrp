@@ -67,6 +67,9 @@ def trim_cpio_trailer(gz_bytes):
 
 
 def main():
+    if len(sys.argv) != 6:
+        print(__doc__)
+        return 2
     template, kernel_path, ramdisk_path, dt_path, out_path = sys.argv[1:6]
 
     hdr = bytearray(open(template, "rb").read(align(1)))
