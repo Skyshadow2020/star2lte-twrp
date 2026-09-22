@@ -30,6 +30,12 @@ BOARD_BOOTIMAGE_PARTITION_SIZE := 57671680
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 68149248
 BOARD_FLASH_BLOCK_SIZE := 4096
 
+# separate vendor partition (erofs on PE13) — without this the build makes
+# root/vendor a symlink to /system/vendor and the recovery ramdisk rsync
+# collides with the health/sepolicy modules' recovery/root/vendor/etc files
+BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := erofs
+TARGET_COPY_OUT_VENDOR := vendor
+
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
 BOARD_USES_FULL_RECOVERY_IMAGE := false
