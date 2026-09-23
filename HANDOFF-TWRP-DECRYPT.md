@@ -122,3 +122,39 @@ assumes a property exists = potential panic. Found and fixed so far:
    reserve handled by RAMDISK_PAD).
 6. The SBL strips DT properties in recovery boots — audit every vendor
    driver that probes early for unguarded DT-derived pointers.
+
+## UPDATE 2026-09-23 — TWRP 12.1 is ALIVE (not a hang!)
+
+The full hung-boot init trace (last_kmsg of the 12.1 boot) proved:
+- init first+second stage OK, SELinux policy loaded, **adbd started**,
+  **MTP started**, **/data + /system_root + /cache MOUNTED**, TWRP pages
+  cycling — the recovery binary (pid 3527) was RUNNING for 23.7s.
+- The "hang" the user saw = the UI rendered in the WRONG pixel format
+  (grayscale) + the keymaster services never started (the HAL rc files
+  were under system/etc/init/hw/ but TWRP 12.1's init.rc imports
+  /init.recovery.*.rc from the RAMDISK ROOT).
+
+### Fixes applied (in the tree now)
+1. `TARGET_RECOVERY_PIXEL_FORMAT := "ABGR_8888"` — the proven format from
+   the TeamWin star2lte tree (the logo now renders WITH color).
+2. HAL glue rc files copied to the RAMDISK ROOT (setup-tree.sh).
+3. Workflow input `crypto: true/false` — **false = debug build that boots
+   the full UI WITHOUT touching /data crypto** — use it to debug the
+   decrypt components live from adb (they can then be run manually from
+   /tmp and their errors observed).
+4. RAMDISK_PAD + cpio TRIM in samsung_pack.py (permanent).
+5. Ramdisk is now LZMA (11.4MB) in the local builds — RD_LZMA=y is in the
+   kernel; NOTE: samsung_pack.py in the repo still emits GZIP for CI
+   builds (19.7MB) — the SBL initrd load address limit (0x8A000000, 16.5MB
+   from 0x89000000) means CI-built ramdisks >16.5MB gzip may corrupt via
+   the SBL's device-tree overwrite at boot. Either switch samsung_pack to
+   LZMA (python lzma FORMAT_ALONE, RD_LZMA=y confirmed) or keep CI
+   ramdisks < 16.5MB. The local LZMA build (43.7MB img) is the reference.
+
+### Remaining known issue
+- adb in recovery: `mount functionfs adb /dev/usb-ffs/adb` FAILED in the
+  hung boot (truncated message). The kernel has USB_CONFIGFS=y and system
+  adb works (functionfs in use) — the recovery-side failure needs a look
+  (maybe /dev/usb-ffs mkdir ordering or sepolicy). Without recovery adb,
+  decrypt testing falls back to the TWRP GUI (the Decrypt button) or the
+  /proc/last_kmsg loop.

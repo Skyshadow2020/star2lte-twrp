@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# setup-tree.sh — place the committed device tree into the omni build tree and
+# setup-tree.sh — place the committed device tree into the build tree and
 # pack the Samsung keymaster3/phh/Trustonic blobs into the recovery ramdisk.
+#
+# Usage: setup-tree.sh [crypto]   (crypto: true=decrypt stack, false=debug
+#        boot without touching /data crypto — default true)
 set -euo pipefail
 
+CRYPTO="${1:-true}"
 DT=twrp/device/samsung/star2lte
 rm -rf "$DT"
 mkdir -p twrp/device/samsung
@@ -24,13 +28,17 @@ chmod 750 "$DT/recovery/root/system/vendor/bin/mcDriverDaemon"
 cp -a "$DT/recovery/root/system/etc/init/hw/init.recovery.samsungexynos9810.rc" "$DT/recovery/root/"
 cp -a "$DT/recovery/root/system/etc/init/hw/init.recovery.star2lte.rc"        "$DT/recovery/root/"
 
-
 # Trustonic trustlets — mcDriverDaemon loads these (keymaster3 TEE transport)
 mkdir -p "$DT/recovery/root/system/vendor/app/mcRegistry"
 cp -a vendor-blobs/app/mcRegistry/*   "$DT/recovery/root/system/vendor/app/mcRegistry/"
 
-# the HAL init rc comes from the device tree (recovery/root/system/etc/init/hw/)
-# init imports it by ro.hardware=samsungexynos9810 — nothing to copy here
+if [[ "$CRYPTO" != "true" ]]; then
+  # debug variant: strip the crypto config so TWRP boots WITHOUT touching
+  # /data crypto (UI + adb come up for live component debugging)
+  sed -i '/^TW_INCLUDE_CRYPTO :=/d; /^TW_INCLUDE_FBE :=/d' "$DT/BoardConfig.mk"
+  sed -i 's/^TW_INCLUDE_CRYPTO := true/# debug build: crypto disabled/' "$DT/BoardConfig.mk" 2>/dev/null || true
+  echo "DEBUG build: crypto disabled"
+fi
 
-echo "--- tree ready ---"
+echo "--- tree ready (crypto=$CRYPTO) ---"
 ls "$DT"

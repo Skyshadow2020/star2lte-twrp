@@ -14,6 +14,10 @@ on:
         description: "lunch target"
         required: false
         default: "twrp_star2lte-eng"
+      crypto:
+        description: "include FBE decrypt stack (false = debug boot, UI only)"
+        required: false
+        default: "true"
 
 jobs:
   build:
@@ -64,7 +68,7 @@ jobs:
           df -h .
 
       - name: Place tree and blobs
-        run: ./setup-tree.sh
+        run: ./setup-tree.sh "${{ inputs.crypto }}"
 
       - name: Add swap before build (7GB RAM runner — soong OOM otherwise)
         run: |
