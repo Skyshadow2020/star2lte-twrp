@@ -43,6 +43,7 @@ TARGET_RECOVERY_FSTAB := device/samsung/star2lte/recovery/root/etc/recovery.fsta
 TARGET_OTA_ASSERT_DEVICE := star2lte
 
 # --- TWRP ---
+TARGET_RECOVERY_PIXEL_FORMAT := "ABGR_8888"  # proven on this fbdev (TeamWin star2lte tree)
 TW_THEME := portrait_hdpi
 DEVICE_SCREEN_WIDTH := 1440
 DEVICE_SCREEN_HEIGHT := 2960

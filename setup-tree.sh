@@ -18,6 +18,13 @@ cp -a vendor-blobs/bin/hw/*           "$DT/recovery/root/system/vendor/bin/hw/"
 cp -a vendor-blobs/bin/mcDriverDaemon "$DT/recovery/root/system/vendor/bin/"
 chmod 750 "$DT/recovery/root/system/vendor/bin/mcDriverDaemon"
 
+# HAL launch glue rc files ALSO at the RAMDISK ROOT: TWRP 12.1's init.rc
+# imports /init.recovery.*.rc from the root — without these the keymaster/
+# gatekeeper/mobicore services never start and decrypt hangs the UI
+cp -a "$DT/recovery/root/system/etc/init/hw/init.recovery.samsungexynos9810.rc" "$DT/recovery/root/"
+cp -a "$DT/recovery/root/system/etc/init/hw/init.recovery.star2lte.rc"        "$DT/recovery/root/"
+
+
 # Trustonic trustlets — mcDriverDaemon loads these (keymaster3 TEE transport)
 mkdir -p "$DT/recovery/root/system/vendor/app/mcRegistry"
 cp -a vendor-blobs/app/mcRegistry/*   "$DT/recovery/root/system/vendor/app/mcRegistry/"
